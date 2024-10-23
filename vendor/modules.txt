@@ -48,6 +48,8 @@ github.com/hashicorp/hcl/json/token
 # github.com/inconshreveable/go-vhost v0.0.0-20160627193104-06d84117953b
 ## explicit
 github.com/inconshreveable/go-vhost
+# github.com/kgretzky/evilginx2 v0.0.0-20240424192422-9e3248471968
+## explicit; go 1.22
 # github.com/klauspost/cpuid/v2 v2.2.7
 ## explicit; go 1.15
 github.com/klauspost/cpuid/v2
@@ -103,6 +105,18 @@ github.com/spf13/viper/internal/encoding/yaml
 # github.com/subosito/gotenv v1.2.0
 ## explicit
 github.com/subosito/gotenv
+# github.com/tdewolff/minify v2.3.6+incompatible
+## explicit
+github.com/tdewolff/minify
+github.com/tdewolff/minify/js
+# github.com/tdewolff/parse v2.3.4+incompatible
+## explicit
+github.com/tdewolff/parse
+github.com/tdewolff/parse/buffer
+github.com/tdewolff/parse/js
+github.com/tdewolff/parse/strconv
+# github.com/tdewolff/test v1.0.10
+## explicit; go 1.12
 # github.com/tidwall/btree v0.0.0-20170113224114-9876f1454cf0
 ## explicit
 github.com/tidwall/btree

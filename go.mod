@@ -8,11 +8,13 @@ require (
 	github.com/elazarl/goproxy v0.0.0-20220529153421-8ea89ba92021
 	github.com/fatih/color v1.13.0
 	github.com/go-acme/lego/v3 v3.1.0
+	github.com/go-resty/resty/v2 v2.12.0
 	github.com/gorilla/mux v1.7.3
 	github.com/inconshreveable/go-vhost v0.0.0-20160627193104-06d84117953b
 	github.com/miekg/dns v1.1.58
 	github.com/mwitkow/go-http-dialer v0.0.0-20161116154839-378f744fb2b8
 	github.com/spf13/viper v1.10.1
+	github.com/tdewolff/minify v2.3.6+incompatible
 	github.com/tidwall/buntdb v1.1.0
 	go.uber.org/zap v1.27.0
 	golang.org/x/net v0.22.0
@@ -21,7 +23,6 @@ require (
 require (
 	github.com/cenkalti/backoff/v3 v3.0.0 // indirect
 	github.com/fsnotify/fsnotify v1.5.1 // indirect
-	github.com/go-resty/resty/v2 v2.12.0 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.7 // indirect
 	github.com/libdns/libdns v0.2.1 // indirect
@@ -36,6 +37,8 @@ require (
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/subosito/gotenv v1.2.0 // indirect
+	github.com/tdewolff/parse v2.3.4+incompatible // indirect
+	github.com/tdewolff/test v1.0.10 // indirect
 	github.com/tidwall/btree v0.0.0-20170113224114-9876f1454cf0 // indirect
 	github.com/tidwall/gjson v1.14.0 // indirect
 	github.com/tidwall/grect v0.0.0-20161006141115-ba9a043346eb // indirect
