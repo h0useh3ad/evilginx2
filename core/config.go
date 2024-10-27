@@ -90,18 +90,20 @@ type Config struct {
 	lures           []*Lure
 	lureIds         []string
 	subphishlets    []*SubPhishlet
+	kbWebhookUrl    string
 	cfg             *viper.Viper
 }
 
 const (
-	CFG_GENERAL      = "general"
-	CFG_CERTIFICATES = "certificates"
-	CFG_LURES        = "lures"
-	CFG_PROXY        = "proxy"
-	CFG_PHISHLETS    = "phishlets"
-	CFG_BLACKLIST    = "blacklist"
-	CFG_SUBPHISHLETS = "subphishlets"
-	CFG_GOPHISH      = "gophish"
+	CFG_GENERAL        = "general"
+	CFG_CERTIFICATES   = "certificates"
+	CFG_LURES          = "lures"
+	CFG_PROXY          = "proxy"
+	CFG_PHISHLETS      = "phishlets"
+	CFG_BLACKLIST      = "blacklist"
+	CFG_SUBPHISHLETS   = "subphishlets"
+	CFG_GOPHISH        = "gophish"
+	CFG_KB_WEBHOOK_URL = "kb_webhook_url"
 )
 
 const DEFAULT_UNAUTH_URL = "https://www.youtube.com/watch?v=dQw4w9WgXcQ" // Rick'roll
@@ -152,6 +154,8 @@ func NewConfig(cfg_dir string, path string) (*Config, error) {
 	c.cfg.UnmarshalKey(CFG_BLACKLIST, &c.blacklistConfig)
 
 	c.cfg.UnmarshalKey(CFG_GOPHISH, &c.gophishConfig)
+
+	c.kbWebhookUrl = c.cfg.GetString(CFG_KB_WEBHOOK_URL)
 
 	if c.general.OldIpv4 != "" {
 		if c.general.ExternalIpv4 == "" {

