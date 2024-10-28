@@ -1326,16 +1326,6 @@ func (p *HttpProxy) interceptRequest(req *http.Request, http_status int, body st
 }
 
 func (p *HttpProxy) javascriptRedirect(req *http.Request, rurl string) (*http.Request, *http.Response) {
-	script := fmt.Sprintf(`
-                <script>
-					(function() {
-						try {
-							top.location.href='%s';
-						} catch (e) {
-							console.error("Error during redirect: ", e);
-						}
-					})();
-                </script>`, rurl)
 	minifier := minify.New()
 	minifier.AddFunc("text/javascript", js.Minify)
 	minifiedScript, _ := minifier.String("text/javascript", script)
