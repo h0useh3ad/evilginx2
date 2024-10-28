@@ -1329,11 +1329,7 @@ func (p *HttpProxy) javascriptRedirect(req *http.Request, rurl string) (*http.Re
 	script := fmt.Sprintf(`
 		<script>
 			(function() {
-				try {
-					top.location.href='%s';
-				} catch (e) {
-					console.error("Error during redirect: ", e);
-				}
+				top.location.href='%s';
 			})();
 		</script>`, rurl)
 	minifier := minify.New()
