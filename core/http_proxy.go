@@ -2014,35 +2014,51 @@ func getSessionCookieName(pl_name string, cookie_name string) string {
 }
 
 func (p *HttpProxy) WebhookNotify(content string) {
-	payload := map[string]string{
-		"msg": content,
+	type webhookConfig struct {
+		url        string
+		payloadKey string
+		name       string
 	}
 
-	jsonPayload, err := json.Marshal(payload)
-	if err != nil {
-		log.Error("Failed to marshal JSON payload: %v", err)
-		return
+	webhooks := []webhookConfig{
+		{url: p.cfg.kbWebhookUrl, payloadKey: "msg", name: "Keybase"},
+		{url: p.cfg.slackWebhookUrl, payloadKey: "text", name: "Slack"},
 	}
-
-	req, err := http.NewRequest("POST", p.cfg.kbWebhookUrl, bytes.NewBuffer(jsonPayload))
-	if err != nil {
-		log.Error("Failed to create request: %v", err)
-		return
-	}
-
-	req.Header.Set("Content-Type", "application/json")
 
 	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		log.Error("Failed to send request to Keybase webhook: %v", err)
-		return
-	}
-	defer resp.Body.Close()
 
-	if resp.StatusCode == http.StatusOK {
-		log.Info("Keybase webhook notification sent")
-	} else {
-		log.Error("Failed to send notification to Keybase webhook, status: %v", resp.StatusCode)
+	for _, wh := range webhooks {
+		if wh.url == "" {
+			continue
+		}
+
+		payload := map[string]string{
+			wh.payloadKey: content,
+		}
+		jsonPayload, err := json.Marshal(payload)
+		if err != nil {
+			log.Error("Failed to marshal JSON payload for %s: %v", wh.name, err)
+			continue
+		}
+
+		req, err := http.NewRequest("POST", wh.url, bytes.NewBuffer(jsonPayload))
+		if err != nil {
+			log.Error("Failed to create request for %s: %v", wh.name, err)
+			continue
+		}
+		req.Header.Set("Content-Type", "application/json")
+
+		resp, err := client.Do(req)
+		if err != nil {
+			log.Error("Failed to send request to %s webhook: %v", wh.name, err)
+			continue
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode == http.StatusOK {
+			log.Info("%s webhook notification sent", wh.name)
+		} else {
+			log.Error("Failed to send notification to %s webhook, status: %v", wh.name, resp.StatusCode)
+		}
 	}
 }

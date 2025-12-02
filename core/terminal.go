@@ -235,6 +235,15 @@ func (t *Terminal) handleConfig(args []string) error {
 				log.Error("Failed to save config: %v", err)
 			}
 			return nil
+		case "slack_webhook_url":
+			t.cfg.slackWebhookUrl = args[1]
+			log.Info("Slack webhook URL set to: %s", args[1])
+			t.cfg.cfg.Set(CFG_KB_WEBHOOK_URL, args[1])
+			err := t.cfg.cfg.WriteConfig()
+			if err != nil {
+				log.Error("Failed to save config: %v", err)
+			}
+			return nil
 		case "gophish":
 			switch args[1] {
 			case "test":
@@ -1184,6 +1193,7 @@ func (t *Terminal) createHelp() {
 	h.AddSubCommand("config", []string{"unauth_url"}, "unauth_url <url>", "change the url where all unauthorized requests will be redirected to")
 	h.AddSubCommand("config", []string{"autocert"}, "autocert <on|off>", "enable or disable the automated certificate retrieval from letsencrypt")
 	h.AddSubCommand("config", []string{"kb_webhook_url"}, "kb_webhook_url <url>", "set the Keybase webhook URL")
+	h.AddSubCommand("config", []string{"slack_webhook_url"}, "slack_webhook_url <url>", "set the Slack webhook URL")
 	h.AddSubCommand("config", []string{"gophish", "admin_url"}, "gophish admin_url <url>", "set up the admin url of a gophish instance to communicate with (e.g. https://gophish.domain.com:7777)")
 	h.AddSubCommand("config", []string{"gophish", "api_key"}, "gophish api_key <key>", "set up the api key for the gophish instance to communicate with")
 	h.AddSubCommand("config", []string{"gophish", "insecure"}, "gophish insecure <true|false>", "enable or disable the verification of gophish tls certificate (set to `true` if using self-signed certificate)")
