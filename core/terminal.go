@@ -1183,7 +1183,7 @@ func (t *Terminal) createHelp() {
 			readline.PcItem("ipv4", readline.PcItem("external"), readline.PcItem("bind")),
 			readline.PcItem("unauth_url"),
 			readline.PcItem("autocert", readline.PcItem("on"), readline.PcItem("off")),
-			readline.PcItem("kb_webhook_url"),
+			readline.PcItem("webhook", readline.PcItem("kb_webhook_url"), readline.PcItem("slack_webhook_url")),
 			readline.PcItem("gophish", readline.PcItem("admin_url"), readline.PcItem("api_key"), readline.PcItem("insecure", readline.PcItem("true"), readline.PcItem("false")), readline.PcItem("test"))))
 	h.AddSubCommand("config", nil, "", "show all configuration variables")
 	h.AddSubCommand("config", []string{"domain"}, "domain <domain>", "set base domain for all phishlets (e.g. evilsite.com)")
